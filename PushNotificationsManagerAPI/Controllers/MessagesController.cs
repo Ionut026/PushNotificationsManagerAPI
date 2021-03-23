@@ -5,6 +5,7 @@ using PushNotificationsManagerAPI.Models;
 using PushNotificationsManagerAPI.Repositories;
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace PushNotificationsManagerAPI.Controllers
@@ -18,10 +19,12 @@ namespace PushNotificationsManagerAPI.Controllers
     public class MessagesController : ControllerBase
     {
         private readonly IMessageRepository _messageRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public MessagesController(IMessageRepository messageRepository)
+        public MessagesController(IMessageRepository messageRepository, IHttpContextAccessor httpContextAccessor)
         {
             this._messageRepository = messageRepository;
+            this._httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
@@ -31,7 +34,17 @@ namespace PushNotificationsManagerAPI.Controllers
         [HttpGet]
         public async Task<IEnumerable<Message>> GetMessages()
         {
-            return await _messageRepository.Get();
+            string authenticatedUserRole = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+
+            if (authenticatedUserRole.Equals(UserRoles.Admin))
+            {
+                return await _messageRepository.Get();
+            }
+            else
+            {
+                string authenticatedUser = _httpContextAccessor.HttpContext.User.Identity.Name;
+                return await _messageRepository.GetByUser(authenticatedUser);
+            }
         }
 
         /// <summary>
@@ -56,7 +69,7 @@ namespace PushNotificationsManagerAPI.Controllers
             try
             {
                 var newMessage = await _messageRepository.Create(message);
-                return CreatedAtAction(nameof(GetMessages), new { title = newMessage.Title }, newMessage);
+                return CreatedAtAction(nameof(PostMessages), new { title = newMessage.Title }, newMessage);
             }
             catch (Exception ex)
             {
@@ -79,7 +92,7 @@ namespace PushNotificationsManagerAPI.Controllers
 
             var updatedMessage = await _messageRepository.Update(message);
 
-            return CreatedAtAction(nameof(GetMessages), new { title = updatedMessage.Title }, updatedMessage);
+            return CreatedAtAction(nameof(PutMessages), new { title = updatedMessage.Title }, updatedMessage);
         }
 
         /// <summary>

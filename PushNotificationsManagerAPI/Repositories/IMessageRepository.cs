@@ -23,6 +23,13 @@ namespace PushNotificationsManagerAPI.Repositories
         Task<Message> Get(string title);
 
         /// <summary>
+        /// Gets the message by user
+        /// </summary>
+        /// <param name="userName">The username</param>
+        /// <returns>The found message for the provided username.</returns>
+        Task<IEnumerable<Message>> GetByUser(string userName);
+
+        /// <summary>
         /// Creates a new notification message
         /// </summary>
         /// <param name="message"></param>

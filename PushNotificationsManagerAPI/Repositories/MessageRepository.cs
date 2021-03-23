@@ -2,6 +2,7 @@
 using PushNotificationsManagerAPI.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace PushNotificationsManagerAPI.Repositories
 {
@@ -71,6 +72,16 @@ namespace PushNotificationsManagerAPI.Repositories
             _context.Entry(message).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return await Get(message.Title);
+        }
+
+        /// <summary>
+        /// Gets the message by user
+        /// </summary>
+        /// <param name="userName">The username</param>
+        /// <returns>The found message for the provided username.</returns>
+        public async Task<IEnumerable<Message>>  GetByUser(string userName)
+        {
+            return await _context.Messages.Where(x => x.CreateBy.Equals(userName)).Include(message => message.CreationUser).ToListAsync();
         }
     }
 }
